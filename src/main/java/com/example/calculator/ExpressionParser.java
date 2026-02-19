@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ExpressionParser {
+    private static final double EQ_EPS = 1e-9;
+
     @FunctionalInterface
     interface SymbolResolver {
         double resolve(String symbol);
@@ -33,7 +35,63 @@ final class ExpressionParser {
     }
 
     private double parseExpression() {
-        return parseAddSub();
+        return parseOr();
+    }
+
+    private double parseOr() {
+        double value = parseAnd();
+        while (match(TokenType.OR_OR)) {
+            double rhs = parseAnd();
+            value = (CalculatorMath.toBoolean(value) || CalculatorMath.toBoolean(rhs)) ? 1d : 0d;
+        }
+        return value;
+    }
+
+    private double parseAnd() {
+        double value = parseEquality();
+        while (match(TokenType.AND_AND)) {
+            double rhs = parseEquality();
+            value = (CalculatorMath.toBoolean(value) && CalculatorMath.toBoolean(rhs)) ? 1d : 0d;
+        }
+        return value;
+    }
+
+    private double parseEquality() {
+        double value = parseComparison();
+        while (true) {
+            if (match(TokenType.EQUAL_EQUAL)) {
+                double rhs = parseComparison();
+                value = almostEqual(value, rhs) ? 1d : 0d;
+            } else if (match(TokenType.BANG_EQUAL)) {
+                double rhs = parseComparison();
+                value = almostEqual(value, rhs) ? 0d : 1d;
+            } else {
+                break;
+            }
+        }
+        return value;
+    }
+
+    private double parseComparison() {
+        double value = parseAddSub();
+        while (true) {
+            if (match(TokenType.GREATER)) {
+                value = value > parseAddSub() ? 1d : 0d;
+            } else if (match(TokenType.GREATER_EQUAL)) {
+                value = value >= parseAddSub() ? 1d : 0d;
+            } else if (match(TokenType.LESS)) {
+                value = value < parseAddSub() ? 1d : 0d;
+            } else if (match(TokenType.LESS_EQUAL)) {
+                value = value <= parseAddSub() ? 1d : 0d;
+            } else {
+                break;
+            }
+        }
+        return value;
+    }
+
+    private boolean almostEqual(double a, double b) {
+        return Math.abs(a - b) <= EQ_EPS;
     }
 
     private double parseAddSub() {
@@ -241,6 +299,24 @@ final class ExpressionParser {
                 continue;
             }
 
+            if (i + 1 < input.length()) {
+                String two = input.substring(i, i + 2);
+                TokenType twoChar = switch (two) {
+                    case "==" -> TokenType.EQUAL_EQUAL;
+                    case "!=" -> TokenType.BANG_EQUAL;
+                    case "<=" -> TokenType.LESS_EQUAL;
+                    case ">=" -> TokenType.GREATER_EQUAL;
+                    case "&&" -> TokenType.AND_AND;
+                    case "||" -> TokenType.OR_OR;
+                    default -> null;
+                };
+                if (twoChar != null) {
+                    tokenList.add(new Token(twoChar, two, 0d, i));
+                    i += 2;
+                    continue;
+                }
+            }
+
             TokenType type = switch (c) {
                 case '+' -> TokenType.PLUS;
                 case '-' -> TokenType.MINUS;
@@ -252,6 +328,8 @@ final class ExpressionParser {
                 case '(' -> TokenType.LPAREN;
                 case ')' -> TokenType.RPAREN;
                 case ',' -> TokenType.COMMA;
+                case '<' -> TokenType.LESS;
+                case '>' -> TokenType.GREATER;
                 default -> null;
             };
             if (type == null) {
@@ -278,6 +356,14 @@ final class ExpressionParser {
         LPAREN,
         RPAREN,
         COMMA,
+        LESS,
+        LESS_EQUAL,
+        GREATER,
+        GREATER_EQUAL,
+        EQUAL_EQUAL,
+        BANG_EQUAL,
+        AND_AND,
+        OR_OR,
         EOF
     }
 

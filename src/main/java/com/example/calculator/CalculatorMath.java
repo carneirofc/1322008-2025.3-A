@@ -1,8 +1,11 @@
 package com.example.calculator;
 
+import java.util.Arrays;
 import java.util.List;
 
 final class CalculatorMath {
+    private static final double BOOL_EPS = 1e-12;
+
     private CalculatorMath() {
     }
 
@@ -35,6 +38,10 @@ final class CalculatorMath {
             result *= i;
         }
         return result;
+    }
+
+    static boolean toBoolean(double value) {
+        return Math.abs(value) > BOOL_EPS;
     }
 
     static double clamp(double value, double min, double max) {
@@ -89,6 +96,52 @@ final class CalculatorMath {
         return result;
     }
 
+    static double productOf(List<Double> values) {
+        double result = 1d;
+        for (double value : values) {
+            result *= value;
+            if (!Double.isFinite(result)) {
+                throw new CalculatorException("prod overflowed.");
+            }
+        }
+        return result;
+    }
+
+    static double averageOf(List<Double> values) {
+        double total = 0d;
+        for (double value : values) {
+            total += value;
+        }
+        return total / values.size();
+    }
+
+    static double medianOf(List<Double> values) {
+        double[] copy = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+            copy[i] = values.get(i);
+        }
+        Arrays.sort(copy);
+        int middle = copy.length / 2;
+        if (copy.length % 2 == 1) {
+            return copy[middle];
+        }
+        return (copy[middle - 1] + copy[middle]) / 2d;
+    }
+
+    static double varianceOf(List<Double> values) {
+        double mean = averageOf(values);
+        double total = 0d;
+        for (double value : values) {
+            double diff = value - mean;
+            total += diff * diff;
+        }
+        return total / values.size();
+    }
+
+    static double standardDeviationOf(List<Double> values) {
+        return Math.sqrt(varianceOf(values));
+    }
+
     static double permutation(double nValue, double kValue) {
         long n = requireNonNegativeInteger(nValue, "perm n");
         long k = requireNonNegativeInteger(kValue, "perm k");
@@ -120,5 +173,40 @@ final class CalculatorMath {
             }
         }
         return Math.rint(result);
+    }
+
+    static double fibonacci(double nValue) {
+        long n = requireNonNegativeInteger(nValue, "fib n");
+        if (n > 92) {
+            throw new CalculatorException("fib(n): n too large (max 92).");
+        }
+        if (n <= 1) {
+            return n;
+        }
+        long a = 0;
+        long b = 1;
+        for (long i = 2; i <= n; i++) {
+            long next = a + b;
+            a = b;
+            b = next;
+        }
+        return b;
+    }
+
+    static boolean isPrime(double value) {
+        long n = requireInteger(value, "Prime input");
+        if (n < 2) {
+            return false;
+        }
+        if (n % 2 == 0) {
+            return n == 2;
+        }
+        long limit = (long) Math.sqrt(n);
+        for (long i = 3; i <= limit; i += 2) {
+            if (n % i == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 }
