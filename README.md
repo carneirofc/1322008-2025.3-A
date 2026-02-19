@@ -7,6 +7,9 @@ Feature-rich command-line calculator built with Java + Maven.
 - JDK 17+
 - Maven 3.9+
 
+This repo also includes standalone Windows build scripts that use:
+`C:\Users\claud\microsoft-jdk-21.0.10-windows-x64\jdk-21.0.10+7`
+
 ## Features
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`, `^`, factorial `!`
@@ -31,6 +34,15 @@ Feature-rich command-line calculator built with Java + Maven.
 ```bash
 mvn test
 mvn exec:java
+```
+
+Or using the included PowerShell script (no Maven required for app build/run):
+
+```powershell
+.\build.ps1 clean
+.\build.ps1 jar
+.\build.ps1 run
+.\build.ps1 -Task run -AppArgs "--eval","2 + 2"
 ```
 
 ## Usage
