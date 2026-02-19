@@ -6,17 +6,26 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$BuildScript = Join-Path $ProjectRoot "build.ps1"
+$Mvn = Join-Path $ProjectRoot "vendor\tools\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin\mvn.cmd"
+Push-Location $ProjectRoot
 
-if (!(Test-Path $BuildScript)) {
-    throw "Build script nao encontrado em '$BuildScript'."
-}
+try {
+    switch ($Task) {
+        "clean"   { & $Mvn clean }
+        "compile" { & $Mvn compile }
+        "jar"     { & $Mvn clean package -DskipTests }
+    }
 
-& $BuildScript -Task $Task
-if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
-}
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
 
-if ($Task -eq "jar") {
-    Write-Host "Build concluido: target/calculator.jar"
+    if ($Task -eq "jar") {
+        $Jar = Get-ChildItem -Path "target" -Filter "*.jar" | Select-Object -First 1
+        if ($Jar) {
+            Write-Host "Build concluido: target/$($Jar.Name)"
+        }
+    }
+} finally {
+    Pop-Location
 }

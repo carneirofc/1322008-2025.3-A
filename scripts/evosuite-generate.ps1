@@ -90,8 +90,6 @@ foreach ($class in $TargetClasses) {
         "-Dsearch_budget=$SearchBudget" `
         "-Dtest_dir=$GeneratedTestsDir" `
         "-Dreport_dir=$GeneratedReportDir" `
-        "-Djunit_check=false" `
-        "-Dno_runtime_dependency=true" `
         "-Dshow_progress=false"
 
     if ($LASTEXITCODE -ne 0) {

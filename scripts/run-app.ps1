@@ -7,26 +7,28 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$BuildScript = Join-Path $ProjectRoot "build.ps1"
-$JarPath = Join-Path $ProjectRoot "target\calculator.jar"
+$BuildAppScript = Join-Path $PSScriptRoot "build-app.ps1"
+$Java = "java"
 
-if (!(Test-Path $BuildScript)) {
-    throw "Build script nao encontrado em '$BuildScript'."
+function Invoke-Build {
+    & $BuildAppScript -Task jar
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-if ($Rebuild) {
-    & $BuildScript -Task jar
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
-} elseif (!(Test-Path $JarPath)) {
-    & $BuildScript -Task jar
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+$JarFile = Get-ChildItem -Path (Join-Path $ProjectRoot "target") -Filter "*.jar" -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+
+if ($Rebuild -or !$JarFile) {
+    Invoke-Build
+    $JarFile = Get-ChildItem -Path (Join-Path $ProjectRoot "target") -Filter "*.jar" -ErrorAction SilentlyContinue |
+        Select-Object -First 1
 }
 
-& $BuildScript -Task run -AppArgs $AppArgs
+if (!$JarFile) {
+    throw "Jar nao encontrado em 'target/'. Execute com -Rebuild para compilar."
+}
+
+& $Java -jar $JarFile.FullName @AppArgs
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
