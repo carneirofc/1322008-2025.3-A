@@ -1,17 +1,35 @@
 package com.example.calculator;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-record CommandResult(List<String> outputLines, boolean exitRequested) {
+final class CommandResult {
+    private final List<String> outputLines;
+    private final boolean exitRequested;
+
+    CommandResult(List<String> outputLines, boolean exitRequested) {
+        this.outputLines = Collections.unmodifiableList(new ArrayList<String>(outputLines));
+        this.exitRequested = exitRequested;
+    }
+
+    List<String> outputLines() {
+        return outputLines;
+    }
+
+    boolean exitRequested() {
+        return exitRequested;
+    }
+
     static CommandResult ofLines(List<String> outputLines) {
-        return new CommandResult(List.copyOf(outputLines), false);
+        return new CommandResult(outputLines, false);
     }
 
     static CommandResult exit() {
-        return new CommandResult(List.of(), true);
+        return new CommandResult(Collections.<String>emptyList(), true);
     }
 
     static CommandResult empty() {
-        return new CommandResult(List.of(), false);
+        return new CommandResult(Collections.<String>emptyList(), false);
     }
 }

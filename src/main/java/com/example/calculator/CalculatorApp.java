@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -29,22 +30,29 @@ public class CalculatorApp {
 
         String first = args[0];
         switch (first) {
-            case "-h", "--help" -> printCliHelp();
-            case "-e", "--eval" -> {
+            case "-h":
+            case "--help":
+                printCliHelp();
+                break;
+            case "-e":
+            case "--eval":
                 if (args.length < 2) {
                     System.err.println("Missing expression for --eval.");
                     return;
                 }
                 runSingleLine(String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
-            }
-            case "-f", "--file" -> {
+                break;
+            case "-f":
+            case "--file":
                 if (args.length < 2) {
                     System.err.println("Missing path for --file.");
                     return;
                 }
-                runScript(Path.of(args[1]));
-            }
-            default -> runSingleLine(String.join(" ", args));
+                runScript(Paths.get(args[1]));
+                break;
+            default:
+                runSingleLine(String.join(" ", args));
+                break;
         }
     }
 
@@ -104,7 +112,7 @@ public class CalculatorApp {
             if (pathText.isEmpty()) {
                 throw new CalculatorException(":load requires a script path.");
             }
-            runScript(Path.of(pathText));
+            runScript(Paths.get(pathText));
             return true;
         }
 

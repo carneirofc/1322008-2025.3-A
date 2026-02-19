@@ -301,15 +301,22 @@ final class ExpressionParser {
 
             if (i + 1 < input.length()) {
                 String two = input.substring(i, i + 2);
-                TokenType twoChar = switch (two) {
-                    case "==" -> TokenType.EQUAL_EQUAL;
-                    case "!=" -> TokenType.BANG_EQUAL;
-                    case "<=" -> TokenType.LESS_EQUAL;
-                    case ">=" -> TokenType.GREATER_EQUAL;
-                    case "&&" -> TokenType.AND_AND;
-                    case "||" -> TokenType.OR_OR;
-                    default -> null;
-                };
+                TokenType twoChar;
+                if ("==".equals(two)) {
+                    twoChar = TokenType.EQUAL_EQUAL;
+                } else if ("!=".equals(two)) {
+                    twoChar = TokenType.BANG_EQUAL;
+                } else if ("<=".equals(two)) {
+                    twoChar = TokenType.LESS_EQUAL;
+                } else if (">=".equals(two)) {
+                    twoChar = TokenType.GREATER_EQUAL;
+                } else if ("&&".equals(two)) {
+                    twoChar = TokenType.AND_AND;
+                } else if ("||".equals(two)) {
+                    twoChar = TokenType.OR_OR;
+                } else {
+                    twoChar = null;
+                }
                 if (twoChar != null) {
                     tokenList.add(new Token(twoChar, two, 0d, i));
                     i += 2;
@@ -317,21 +324,48 @@ final class ExpressionParser {
                 }
             }
 
-            TokenType type = switch (c) {
-                case '+' -> TokenType.PLUS;
-                case '-' -> TokenType.MINUS;
-                case '*' -> TokenType.STAR;
-                case '/' -> TokenType.SLASH;
-                case '%' -> TokenType.PERCENT;
-                case '^' -> TokenType.CARET;
-                case '!' -> TokenType.BANG;
-                case '(' -> TokenType.LPAREN;
-                case ')' -> TokenType.RPAREN;
-                case ',' -> TokenType.COMMA;
-                case '<' -> TokenType.LESS;
-                case '>' -> TokenType.GREATER;
-                default -> null;
-            };
+            TokenType type;
+            switch (c) {
+                case '+':
+                    type = TokenType.PLUS;
+                    break;
+                case '-':
+                    type = TokenType.MINUS;
+                    break;
+                case '*':
+                    type = TokenType.STAR;
+                    break;
+                case '/':
+                    type = TokenType.SLASH;
+                    break;
+                case '%':
+                    type = TokenType.PERCENT;
+                    break;
+                case '^':
+                    type = TokenType.CARET;
+                    break;
+                case '!':
+                    type = TokenType.BANG;
+                    break;
+                case '(':
+                    type = TokenType.LPAREN;
+                    break;
+                case ')':
+                    type = TokenType.RPAREN;
+                    break;
+                case ',':
+                    type = TokenType.COMMA;
+                    break;
+                case '<':
+                    type = TokenType.LESS;
+                    break;
+                case '>':
+                    type = TokenType.GREATER;
+                    break;
+                default:
+                    type = null;
+                    break;
+            }
             if (type == null) {
                 throw new CalculatorException("Unexpected character '" + c + "' at position " + i);
             }
@@ -367,6 +401,17 @@ final class ExpressionParser {
         EOF
     }
 
-    private record Token(TokenType type, String text, double number, int position) {
+    private static final class Token {
+        private final TokenType type;
+        private final String text;
+        private final double number;
+        private final int position;
+
+        private Token(TokenType type, String text, double number, int position) {
+            this.type = type;
+            this.text = text;
+            this.number = number;
+            this.position = position;
+        }
     }
 }

@@ -127,26 +127,38 @@ public class CalculatorEngine {
         }
         double rhs = parseExpression(expression);
         double current = state.hasVariable(name) ? state.getVariable(name) : 0d;
-        double result = switch (operator) {
-            case "=" -> rhs;
-            case "+=" -> current + rhs;
-            case "-=" -> current - rhs;
-            case "*=" -> current * rhs;
-            case "/=" -> {
+        double result;
+        switch (operator) {
+            case "=":
+                result = rhs;
+                break;
+            case "+=":
+                result = current + rhs;
+                break;
+            case "-=":
+                result = current - rhs;
+                break;
+            case "*=":
+                result = current * rhs;
+                break;
+            case "/=":
                 if (rhs == 0d) {
                     throw new CalculatorException("Division by zero in '/=' assignment.");
                 }
-                yield current / rhs;
-            }
-            case "%=" -> {
+                result = current / rhs;
+                break;
+            case "%=":
                 if (rhs == 0d) {
                     throw new CalculatorException("Modulo by zero in '%=' assignment.");
                 }
-                yield current % rhs;
-            }
-            case "^=" -> Math.pow(current, rhs);
-            default -> throw new CalculatorException("Unsupported assignment operator: " + operator);
-        };
+                result = current % rhs;
+                break;
+            case "^=":
+                result = Math.pow(current, rhs);
+                break;
+            default:
+                throw new CalculatorException("Unsupported assignment operator: " + operator);
+        }
         result = validateFinite(result, "Assignment result");
         state.putVariable(name, result);
         state.setAns(result);

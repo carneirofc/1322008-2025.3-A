@@ -1,6 +1,8 @@
 package com.example.calculator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,7 +38,7 @@ final class CalculatorCommandProcessor {
     }
 
     List<HistoryEntry> historySnapshot() {
-        return List.copyOf(history);
+        return Collections.unmodifiableList(new ArrayList<HistoryEntry>(history));
     }
 
     private CommandResult processHistoryRecall(String normalized) {
@@ -71,34 +73,40 @@ final class CalculatorCommandProcessor {
         String command = parts[0].toLowerCase(Locale.ROOT);
         String tail = parts.length > 1 ? parts[1].trim() : "";
 
-        return switch (command) {
-            case ":help" -> CommandResult.ofLines(helpLines());
-            case ":vars" -> CommandResult.ofLines(formatMap("Variables", engine.getVariablesSnapshot()));
-            case ":const", ":constants" -> CommandResult.ofLines(formatMap("Constants", engine.getConstantsSnapshot()));
-            case ":funcs", ":functions" -> CommandResult.ofLines(formatFunctions(engine.getFunctionsHelp()));
-            case ":history" -> CommandResult.ofLines(formatHistory(tail));
-            case ":ans" -> CommandResult.ofLines(List.of("ans = " + NumberFormatUtil.format(engine.getAns())));
-            case ":memory" -> CommandResult.ofLines(List.of("memory = " + NumberFormatUtil.format(engine.memoryRecall())));
-            case ":clear" -> {
+        switch (command) {
+            case ":help":
+                return CommandResult.ofLines(helpLines());
+            case ":vars":
+                return CommandResult.ofLines(formatMap("Variables", engine.getVariablesSnapshot()));
+            case ":const":
+            case ":constants":
+                return CommandResult.ofLines(formatMap("Constants", engine.getConstantsSnapshot()));
+            case ":funcs":
+            case ":functions":
+                return CommandResult.ofLines(formatFunctions(engine.getFunctionsHelp()));
+            case ":history":
+                return CommandResult.ofLines(formatHistory(tail));
+            case ":ans":
+                return CommandResult.ofLines(Collections.singletonList("ans = " + NumberFormatUtil.format(engine.getAns())));
+            case ":memory":
+                return CommandResult.ofLines(Collections.singletonList("memory = " + NumberFormatUtil.format(engine.memoryRecall())));
+            case ":clear":
                 history.clear();
                 historyCounter = 0;
-                yield CommandResult.ofLines(List.of("History cleared."));
-            }
-            case ":reset" -> {
+                return CommandResult.ofLines(Collections.singletonList("History cleared."));
+            case ":reset":
                 history.clear();
                 historyCounter = 0;
                 engine.reset();
-                yield CommandResult.ofLines(List.of("Calculator reset."));
-            }
-            case ":del" -> {
-                if (tail.isBlank()) {
+                return CommandResult.ofLines(Collections.singletonList("Calculator reset."));
+            case ":del":
+                if (tail.isEmpty()) {
                     throw new CalculatorException(":del requires a variable name.");
                 }
                 boolean removed = engine.deleteVariable(tail);
-                yield CommandResult.ofLines(List.of(removed ? "Deleted variable: " + tail : "Variable not found: " + tail));
-            }
-            case ":seed" -> {
-                if (tail.isBlank()) {
+                return CommandResult.ofLines(Collections.singletonList(removed ? "Deleted variable: " + tail : "Variable not found: " + tail));
+            case ":seed":
+                if (tail.isEmpty()) {
                     throw new CalculatorException(":seed requires an integer value.");
                 }
                 long seed;
@@ -108,18 +116,18 @@ final class CalculatorCommandProcessor {
                     throw new CalculatorException("Invalid seed value: " + tail);
                 }
                 engine.setRandomSeed(seed);
-                yield CommandResult.ofLines(List.of("Random seed set to " + seed));
-            }
-            default -> throw new CalculatorException("Unknown command: " + command + " (use :help)");
-        };
+                return CommandResult.ofLines(Collections.singletonList("Random seed set to " + seed));
+            default:
+                throw new CalculatorException("Unknown command: " + command + " (use :help)");
+        }
     }
 
     private List<String> formatHistory(String tail) {
         if (history.isEmpty()) {
-            return List.of("History: <empty>");
+            return Collections.singletonList("History: <empty>");
         }
         int limit = history.size();
-        if (!tail.isBlank()) {
+        if (!tail.isEmpty()) {
             try {
                 limit = Integer.parseInt(tail);
             } catch (NumberFormatException ex) {
@@ -149,7 +157,7 @@ final class CalculatorCommandProcessor {
 
     private List<String> formatMap(String title, Map<String, Double> entries) {
         if (entries.isEmpty()) {
-            return List.of(title + ": <empty>");
+            return Collections.singletonList(title + ": <empty>");
         }
         List<String> lines = new ArrayList<>();
         lines.add(title + ":");
@@ -167,32 +175,32 @@ final class CalculatorCommandProcessor {
         if ("MR".equals(command)) {
             String output = NumberFormatUtil.format(engine.memoryRecall());
             addHistory("MR", output);
-            return CommandResult.ofLines(List.of(output));
+            return CommandResult.ofLines(Collections.singletonList(output));
         }
         if ("MC".equals(command)) {
             engine.memoryClear();
-            return CommandResult.ofLines(List.of("memory = 0"));
+            return CommandResult.ofLines(Collections.singletonList("memory = 0"));
         }
         if ("MS".equals(command)) {
-            double value = tail.isBlank() ? engine.getAns() : engine.evaluate(tail);
+            double value = tail.isEmpty() ? engine.getAns() : engine.evaluate(tail);
             engine.memoryStore(value);
             String output = "memory = " + NumberFormatUtil.format(engine.memoryRecall());
             addHistory(line, output);
-            return CommandResult.ofLines(List.of(output));
+            return CommandResult.ofLines(Collections.singletonList(output));
         }
         if ("M+".equals(command)) {
-            double value = tail.isBlank() ? engine.getAns() : engine.evaluate(tail);
+            double value = tail.isEmpty() ? engine.getAns() : engine.evaluate(tail);
             engine.memoryAdd(value);
             String output = "memory = " + NumberFormatUtil.format(engine.memoryRecall());
             addHistory(line, output);
-            return CommandResult.ofLines(List.of(output));
+            return CommandResult.ofLines(Collections.singletonList(output));
         }
         if ("M-".equals(command)) {
-            double value = tail.isBlank() ? engine.getAns() : engine.evaluate(tail);
+            double value = tail.isEmpty() ? engine.getAns() : engine.evaluate(tail);
             engine.memorySubtract(value);
             String output = "memory = " + NumberFormatUtil.format(engine.memoryRecall());
             addHistory(line, output);
-            return CommandResult.ofLines(List.of(output));
+            return CommandResult.ofLines(Collections.singletonList(output));
         }
         return null;
     }
@@ -223,7 +231,7 @@ final class CalculatorCommandProcessor {
     }
 
     static List<String> helpLines() {
-        return List.of(
+        return Arrays.asList(
                 "Expression features:",
                 "  Operators: + - * / % ^ !",
                 "  Comparisons: < <= > >= == !=",
